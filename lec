@@ -1,0 +1,498 @@
+#!/bin/bash
+
+mkdir DB
+cd DB
+
+
+
+function mainMenu {
+  PS3="Menu > "
+  select var in Create_Database ListDB ConnectDB DropDB Exit
+   do
+ 
+ 	case $REPLY in
+	 	1) CreateDatabase;;
+	 	2) ls -F ; mainMenu;;
+	 	3) Connect;;
+	 	4) Drop;;
+	 	5) exit ;; 	
+		*) mainMenu
+		 ;;
+ 	esac
+   done
+}
+
+
+list=$(pwd)
+
+function CreateDatabase {
+
+
+	read -p "Database name: " dbName
+
+if [[ "$dbName" =~ ^[a-zA-Z][_a-zA-Z0-9]*[a-zA-Z0-9]$ ]]; then
+
+  if [[ -d $dbName ]]; then 
+  
+ 	echo "this Database already exists "	
+ 	mainMenu
+ 
+  else
+    mkdir $dbName
+    echo "DONE"
+    mainMenu
+ 
+  fi 
+  
+ 
+else 
+   echo -e "This name is invalid\n-The name cannot begin with numbers or symbols.\n-It can consist of letters and letters.It can consist of uppercase and lowercase letters.\n-There can be numbers in the middle or at the end of the name.\n-It cannot contain spaces and must not contain any symbols.\n-Except "_" and any spaces are converted to "_" "
+
+fi
+
+}
+
+function Connect {
+
+	read -p "Database name: " dbName
+
+if [[ "$dbName" =~ ^[a-zA-Z][_a-zA-Z0-9]*[a-zA-Z0-9]$ ]]; then
+
+  if [[ -d $dbName ]]; then 
+  
+ 	cd $dbName
+ 	PS3="$dbName > "
+ 	T_menu
+ 
+  else
+   
+    echo -e "this database is not found "
+    mainMenu
+ 
+  fi 
+  
+ 
+else 
+   echo -e "This name is invalid\n "
+   select x in Retry Exit
+	do
+	case $REPLY in
+		1) Connect ;;
+		2) echo "Exit"; mainMenu;;
+			
+		esac	
+	done
+
+fi
+
+
+}
+
+
+function Drop {
+
+	read -p "Enter database name: " dbName
+	
+	if [[ "$dbName" =~ ^[a-zA-Z][_a-zA-Z0-9]*[a-zA-Z0-9]$  ]]; then
+	 	
+	  if [[ -d $dbName ]]; then
+	  echo -e "Are you sure to drop $dbName DB"
+	    select x in yes no
+		do
+		case $REPLY in
+		1) rm -r $dbName
+	           echo -e " $dbName DB dropped successfuly \n"
+	  	   mainMenu ;;
+		2) echo "Exit"; mainMenu;;
+		esac	
+		done
+	  else
+	   	
+	  	echo -e "this database is not found to be droped\n"
+	  	mainMenu
+	  
+	  fi
+	else
+	
+	echo "this name is invalid "
+	select x in Retry Exit
+	do
+	case $REPLY in
+		1) Drop ;;
+		2) echo "Exit"; mainMenu;;
+			
+		esac	
+	done
+	fi
+
+}
+
+#---------------------------TABLE--------------------------------------
+
+
+function T_menu {
+
+
+  select var in Create_table List_t Drop_t insert_in_t delete_from_t select_all  Exit
+   do
+ 
+ 	case $REPLY in
+	 	1) createTable ;;
+	 	2) ls ;;
+	 	3) DropTable;;
+	 	4) insertTable;;
+	 	5) Delete	;;
+	 	6)selectAll;;
+	 	7) echo "Exit";mainMenu	;;
+		*)echo "mainMenu"
+		 ;;
+ 	esac
+   done
+	
+
+}
+
+
+function createTable {
+
+    read -p "Table name: " tname
+	
+ tname=$(echo "$tname" | tr ' ' '_')
+ if [[ $tname =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+		    if [[ -f $tname ]]; then
+		    
+		    	echo  "Sorry! this table already exists";
+		    	T_menu
+		    
+		   else
+	  	
+		   		while true; do
+				   
+		   		read -p "Enter your columns number :" col_number
+
+				    if [[ "$col_number" =~ ^[0-9]+$ ]]; then
+					
+					col_seperator=";;"
+					row_seperator="\n"
+					p_key=""
+					
+						
+					for((i=1 ; i <= col_number ; i++ ))
+					do
+					    read -p "Enter Column Name: " col_name
+					  
+					    userInput=$(echo "$userInput" | tr ' ' '_')
+					    
+					     if [[ "$col_name" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
+       
+        				       echo "TYPE OF $col_name : "
+        				        select c in Number varchar20
+        				         do
+        				           case $REPLY in
+        				              
+        				              1) col_type="Number"; 
+        				                 break;;
+        				                 
+        				              2) col_type="varchar20";
+        				                 break;;
+        				                 
+        				              *) echo -e "/n this is invalid input and your table didn't create/n"; T_menu ; break;;
+        				                 
+        				                        				          
+        				           esac    				         
+        				         
+        				         done
+        				         
+        				         if [[ $p_key == "" ]]; then
+        				           
+        				         	echo "$col_name Must be Pk, choose yes to make it a primary key column"
+        				         	
+        				         	select q in yes  
+        				         	do
+        				                    case $REPLY in
+        				                    
+        				                     1) p_key='PK';
+        				                        columns+=$col_name$col_seperator$col_type$col_seperator$p_key;
+        				                     
+        				                        break;;
+        				                        
+        				                    # 2) columns+=$row_seperator$col_name$col_seperator$col_type$col_seperator;
+        				                   
+        				                     #break;;
+							     *)break;;
+        				                    
+        				                    esac
+        				         	
+        				         	done
+        				         else
+        				         
+        				          columns+=$row_seperator$col_name$col_seperator$col_type$col_seperator;
+        				  
+        				                 				         
+        				         fi
+        				      if [[ $i == $col_number ]]
+						 	then
+								col_data=$col_data$col_name
+								echo "col_data = $col_data"
+						 	else
+								col_data=$col_data$col_name$col_seperator
+						fi
+				             else
+						echo "Invalid input. Please enter valid name"
+					     fi
+															
+					done
+				         touch "meta.$tname"
+				         touch $tname
+				         echo -e  $columns>> meta.$tname
+				         echo  $col_data>> $tname
+					 echo   "$tname table was created successfuly"
+					 T_menu
+				    else
+					echo "Invalid input. Please enter an integer number."
+				    fi
+				done
+				
+		   fi
+		
+		else
+		
+			echo  "this name is invalid "
+			select x in Retry Exit
+				do
+				case $REPLY in
+					1) createTable ;;
+					2) echo "Exit"; T_menu;;
+						
+					esac	
+				done
+		
+		fi
+
+}
+cd
+function DropTable {
+
+     read -p "Enter Table Name: " tname
+	tname=$(echo "$tname" | tr ' ' '_')
+       if [[ $tname =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+		    if [[ -f $tname ]]; then
+		    
+	               echo -e "Are you sure to drop $tname Table ?"
+			    select m in yes no
+				do
+				case $REPLY in
+				1) rm -f $tname && rm -f meta.$tname
+				   echo -e " $tname table dropped successfuly \n"
+			  	   T_menu ;;
+				2) echo "Exit"; T_menu;;
+				esac	
+				done
+		    else
+		    
+		    echo "This table does not exist"
+		    T_menu
+		    
+		    fi
+	else
+	select x in Retry Exit
+				do
+				case $REPLY in
+					1) DropTable ;;
+					2) echo "Exit"; T_menu;;
+						
+					esac	
+				done
+		
+	fi
+	
+}
+
+
+
+
+function insertTable {
+	 read -p "Table name: " tname
+	 
+	 tname=$(echo "$tname" | tr ' ' '_')
+	 if [[ $tname =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+	 	 if [[ -f $tname ]]; then
+		 	 	 
+				 Tcol=$(awk 'END{print NR}' meta.$tname)
+				echo "$Tcol"
+				seperator=";;"
+				rowSeperator=" "
+				for (( i=1 ; i <= Tcol ; i++ ))
+				do
+	
+				name=$(awk -F";;" '{if(NR=='$i') print $1}'  "meta.$tname")
+				#echo "$name"
+				type=$(awk -F";;" '{if(NR=='$i') print $2}'  "meta.$tname")
+				#echo "$type"
+				key=$(awk -F";;" '{if(NR=='$i') print $3}'  "meta.$tname")
+				#echo "$key"
+				
+				read -p "$name($type) >" data
+				
+				if [[ $type == 'Number' ]];then
+				
+					while [[ true ]]
+					do
+						if [[ "$data" =~ ^[0-9]+$ ]]; then
+					 		break;
+					 	else
+							 echo "invalid , please inter integer num"
+							 read -p "$name($type) >" data
+						fi
+					
+					done
+				else
+				   while [[ true ]]
+				   do
+				   
+				    if [[ $data =~ ^[a-zA-Z]+$ ]]; then
+				    	break;
+				    	
+				    else
+				    	  echo "invalid , please inter varchar num"
+					  read -p "$name($type) >" data
+				    fi
+				    done
+				
+				fi
+				
+				 if [[ $i == $Tcol ]];then
+					row=$row$data$rowSeperator
+				else
+					row=$row$data$seperator
+				fi
+
+			done
+			echo $row >> $tname
+			row=""
+			echo "Row add successfully";
+			T_menu
+	 	 	
+	 	 else
+	 	   echo "This table does not exist"
+		    T_menu
+	 	 fi
+ 		
+	 
+	 else
+	 
+	 echo "Invalid table name "
+	 T_menu
+	 
+	 fi
+	
+}
+
+function Delete {
+
+	read -p "Entier Table name: " tname
+	read -p "Row num : " rowNum
+	 tname=$(echo "$tname" | tr ' ' '_')
+	if [[ $tname =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ && "$rowNum" =~ ^[0-9]+$ ]]; then
+		 
+		
+		 if [[ -f $tname ]]; then
+		 
+		let "rowNum += 1"
+		 
+		 Tcol=$(awk -F";;" 'END{print NR}'  "$tname")
+			 if [[ $rowNum < Tcol ]]; then
+			      sed -i ''$rowNum'd' $tname
+			      echo "Row deleted"
+			 else
+			 echo "Row doesn't exist"
+			 T_menu
+			 fi
+		 
+		 
+		 else
+		  echo "This table does not exist"
+		    T_menu
+		 fi
+	else
+		 echo "Invalid table name "
+		 T_menu
+	fi 
+
+}
+
+
+
+
+function selectAll {
+	read -p "Table name: " tname
+	
+	
+	
+
+	if [[ $tname =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]];then        	
+		if [ -f $tname ]
+		then
+			if [[ `wc -l < "$tname"` = 1 ]]
+			then
+				echo "No data yet";
+				selectMenu;
+			else
+				cat $tname;
+				T_menu;
+			fi
+		else
+			echo "Table doesn't exist";
+			T_menu;
+		fi
+	else
+                echo "Ivalid input";
+                echo " "
+                T_menu
+        fi   
+}
+
+
+
+mainMenu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
